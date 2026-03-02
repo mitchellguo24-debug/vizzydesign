@@ -1,0 +1,942 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>New Campaign – Agent Mode</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --primary:#5856D6;--primary-light:#EEF2FF;--primary-border:#C7C7F5;
+  --fg:#20242E;--fg2:#363A43;--muted:#7A90AE;--subtle:#546988;
+  --border:#B3C4DA;--border-light:#E2E8F0;--bg:#F8FAFC;
+  --ai-bg:#F4F4FF;--ai-border:#DDDDF8;--white:#fff;
+}
+body{font-family:'Inter',sans-serif;background:#F1F5F9;display:flex;min-height:100vh;}
+
+/* Sidebar */
+.sidebar{width:256px;min-height:100vh;background:#fff;border-right:1px solid var(--border-light);display:flex;flex-direction:column;flex-shrink:0;}
+.sb-logo{padding:14px 24px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;justify-content:space-between;}
+.sb-logo-text{font-size:13px;font-weight:700;color:var(--fg);letter-spacing:.04em;}
+.sb-nav{flex:1;padding:12px;display:flex;flex-direction:column;gap:2px;}
+.nav-item{display:flex;align-items:center;gap:12px;padding:9px 12px;border-radius:10px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer;}
+.nav-item:hover{background:var(--bg);}
+.nav-item.active{background:var(--primary-light);color:var(--primary);font-weight:600;}
+.sb-foot{border-top:1px solid var(--border-light);padding:16px;}
+.user-row{display:flex;align-items:center;gap:12px;padding:8px 12px;margin-top:4px;}
+.avatar{width:38px;height:38px;border-radius:50%;background:#E2E8F0;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#45556C;flex-shrink:0;}
+
+/* Main */
+.main{flex:1;padding:32px 40px;display:flex;flex-direction:column;}
+.card{flex:1;background:#fff;border:1px solid var(--border);border-radius:24px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 1px 12px -1px rgba(88,86,214,.1);}
+
+/* Top bar */
+.topbar{height:64px;background:#fff;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;padding:0 32px 0 48px;flex-shrink:0;border-radius:24px 24px 0 0;}
+.breadcrumb{display:flex;align-items:center;gap:4px;font-size:15px;}
+.bc-muted{color:var(--muted);font-weight:500;}
+.bc-cur{color:var(--fg);font-weight:600;}
+.topbar-right{display:flex;align-items:center;gap:10px;}
+.mode-toggle{display:flex;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:3px;gap:2px;}
+.mode-btn{padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:5px;border:none;background:transparent;font-family:'Inter',sans-serif;}
+.mode-btn.active{background:#fff;color:var(--primary);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08);}
+.btn-cancel{height:40px;padding:0 16px;border:1px solid var(--border);border-radius:12px;background:#fff;font-size:14px;font-weight:500;color:var(--fg);cursor:pointer;}
+
+/* Split body */
+.split-body{flex:1;display:flex;overflow:hidden;}
+
+/* Chat panel */
+.chat-panel{display:flex;flex-direction:column;background:#fff;min-width:0;transition:flex .4s cubic-bezier(.4,0,.2,1);}
+.chat-panel.full{flex:1;}
+.chat-panel.split{flex:0 0 60%;}
+.chat-panel.hidden{flex:0 0 0%;overflow:hidden;}
+
+.chat-hdr{padding:18px 32px 14px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.ai-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,#5856D6,#8B86E8);display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px;flex-shrink:0;}
+.chat-hdr-title{font-size:14px;font-weight:600;color:var(--fg);}
+.chat-hdr-sub{font-size:12px;color:var(--muted);}
+.step-badge{margin-left:auto;background:var(--primary-light);color:var(--primary);font-size:12px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid var(--primary-border);}
+
+/* Progress */
+.prog-strip{padding:10px 32px;border-bottom:1px solid var(--border-light);display:flex;align-items:center;flex-shrink:0;overflow-x:auto;}
+.prog-step{display:flex;align-items:center;gap:5px;font-size:11px;font-weight:500;color:var(--muted);white-space:nowrap;}
+.prog-dot{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;background:#E2E8F0;color:#7A90AE;flex-shrink:0;}
+.prog-step.done .prog-dot{background:#22C55E;color:#fff;}
+.prog-step.done{color:#22C55E;}
+.prog-step.active .prog-dot{background:var(--primary);color:#fff;}
+.prog-step.active{color:var(--primary);font-weight:600;}
+.prog-line{width:24px;height:2px;background:#E2E8F0;margin:0 4px;flex-shrink:0;border-radius:2px;}
+.prog-line.done{background:#22C55E;}
+
+/* Messages */
+.chat-msgs{flex:1;overflow-y:auto;padding:24px 32px;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth;}
+.msg-ai{display:flex;gap:10px;align-items:flex-start;max-width:90%;}
+.av-sm{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#5856D6,#8B86E8);display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;flex-shrink:0;margin-top:2px;}
+.bubble-ai{background:var(--ai-bg);border:1px solid var(--ai-border);border-radius:0 14px 14px 14px;padding:11px 15px;font-size:14px;line-height:1.6;color:var(--fg2);}
+.bubble-ai strong{color:var(--fg);}
+.msg-user{display:flex;justify-content:flex-end;align-self:flex-end;max-width:75%;}
+.bubble-user{background:var(--primary);color:#fff;border-radius:14px 14px 0 14px;padding:10px 15px;font-size:14px;line-height:1.5;}
+
+/* Chips */
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;}
+.chip{border:1.5px solid var(--border);border-radius:10px;padding:8px 13px;font-size:13px;font-weight:500;color:var(--fg2);cursor:pointer;display:flex;align-items:center;gap:6px;background:#fff;transition:all .15s;font-family:'Inter',sans-serif;}
+.chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-light);}
+.chip.selected{border-color:var(--primary);color:var(--primary);background:var(--primary-light);font-weight:600;}
+.chip.disabled{pointer-events:none;opacity:.5;}
+.chip-card{border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;font-size:13px;font-weight:500;color:var(--fg2);cursor:pointer;background:#fff;transition:all .15s;display:flex;flex-direction:column;gap:4px;min-width:180px;}
+.chip-card:hover{border-color:var(--primary);background:var(--primary-light);}
+.chip-card.selected{border-color:var(--primary);background:var(--primary-light);}
+.chip-card .title{font-weight:600;display:flex;align-items:center;gap:6px;}
+.chip-card .desc{font-size:12px;color:var(--muted);font-weight:400;}
+.chip-card.selected .desc{color:#6460D8;}
+
+/* Confirm card */
+.confirm-card{background:#fff;border:1px solid var(--primary-border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:9px;}
+.cc-row{display:flex;gap:8px;font-size:13px;line-height:1.5;}
+.cc-label{color:var(--muted);font-weight:500;min-width:85px;flex-shrink:0;}
+.cc-val{color:var(--fg);font-weight:500;}
+.tag-list{display:flex;flex-wrap:wrap;gap:5px;}
+.tag{background:var(--primary-light);color:var(--primary);padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:500;}
+
+/* Typing indicator */
+.typing{display:flex;gap:4px;align-items:center;padding:2px 0;}
+.typing span{width:7px;height:7px;border-radius:50%;background:var(--primary);opacity:.5;animation:tdot 1.2s infinite ease-in-out;}
+.typing span:nth-child(2){animation-delay:.2s;}
+.typing span:nth-child(3){animation-delay:.4s;}
+@keyframes tdot{0%,80%,100%{transform:scale(.7);opacity:.3;}40%{transform:scale(1);opacity:1;}}
+
+/* URL input row */
+.url-row{display:flex;gap:8px;margin-top:6px;}
+.url-input{flex:1;border:1.5px solid var(--border);border-radius:10px;padding:9px 13px;font-size:14px;font-family:'Inter',sans-serif;color:var(--fg);outline:none;background:var(--bg);}
+.url-input:focus{border-color:var(--primary);background:#fff;}
+.btn-analyze{height:38px;padding:0 16px;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;white-space:nowrap;}
+
+/* Chat input */
+.chat-input-area{padding:14px 32px;border-top:1px solid var(--border-light);display:flex;gap:10px;align-items:flex-end;flex-shrink:0;background:#fff;}
+.chat-input{flex:1;border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;font-size:14px;font-family:'Inter',sans-serif;color:var(--fg);resize:none;outline:none;min-height:44px;max-height:100px;background:var(--bg);transition:border .15s;}
+.chat-input:focus{border-color:var(--primary);background:#fff;}
+.chat-input::placeholder{color:var(--muted);}
+.btn-send{width:44px;height:44px;background:var(--primary);border:none;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#fff;transition:background .15s;}
+.btn-send:hover{background:#4644C4;}
+.btn-send:disabled{background:#C7C7F5;cursor:not-allowed;}
+
+/* Form panel */
+.form-panel{flex:0 0 0%;overflow:hidden;display:flex;flex-direction:column;background:var(--bg);border-left:1px solid var(--border-light);transition:flex .4s cubic-bezier(.4,0,.2,1);opacity:0;}
+.form-panel.visible{flex:0 0 40%;opacity:1;}
+.form-panel.full-form{flex:0 0 100%;opacity:1;}
+.fp-hdr{padding:18px 24px 14px;border-bottom:1px solid var(--border-light);background:#fff;flex-shrink:0;}
+.fp-title{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;color:var(--fg);}
+.icon-box{width:28px;height:28px;background:var(--primary-light);border-radius:8px;display:flex;align-items:center;justify-content:center;}
+.ai-badge{margin-left:auto;background:#ECFDF5;border:1px solid #A7F3D0;color:#059669;font-size:10px;font-weight:600;padding:2px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;}
+.ai-badge::before{content:'';width:6px;height:6px;background:#10B981;border-radius:50%;}
+.fp-sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.fp-body{padding:18px 20px;display:flex;flex-direction:column;gap:14px;overflow-y:auto;flex:1;}
+.sec-title{font-size:10.5px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;}
+.field-grp{display:flex;flex-direction:column;gap:5px;}
+.field-lbl{font-size:11px;font-weight:700;color:var(--subtle);text-transform:uppercase;letter-spacing:.04em;}
+.field-in{background:#fff;border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;font-weight:500;color:var(--fg);font-family:'Inter',sans-serif;width:100%;outline:none;transition:border .15s;}
+.field-in:focus{border-color:var(--primary);}
+textarea.field-in{min-height:64px;resize:none;line-height:1.5;}
+.field-items{display:flex;flex-direction:column;gap:5px;}
+.field-item{display:flex;align-items:center;gap:7px;background:#fff;border:1px solid var(--border);border-radius:8px;padding:8px 11px;font-size:13px;font-weight:500;color:var(--fg);}
+.field-item .num{color:var(--muted);min-width:16px;}
+.field-item .del{margin-left:auto;cursor:pointer;color:var(--muted);}
+.divider{height:1px;background:var(--border-light);}
+.summ-block{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;}
+.summ-row{display:flex;align-items:flex-start;gap:8px;font-size:13px;}
+.summ-lbl{color:var(--muted);font-weight:500;min-width:72px;flex-shrink:0;}
+.summ-val{color:var(--fg);font-weight:600;}
+.summ-val.pending{color:var(--muted);font-weight:400;font-style:italic;}
+.pending-field{background:#F1F5F9;border:1.5px dashed var(--border);border-radius:8px;padding:9px 13px;font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:6px;}
+.budget-bar{background:#fff;border:1px solid var(--border);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;}
+.bbar-row{display:flex;justify-content:space-between;font-size:12px;color:var(--fg2);}
+.bbar{height:6px;background:#EEF2FF;border-radius:99px;overflow:hidden;}
+.bbar-fill{height:100%;border-radius:99px;transition:width .5s ease;}
+.btn-launch{width:100%;height:44px;background:var(--primary);color:#fff;border:none;border-radius:12px;font-family:'Inter',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 4px 14px rgba(88,86,214,.3);transition:background .15s;}
+.btn-launch:hover{background:#4644C4;}
+.btn-draft{width:100%;height:40px;background:transparent;color:var(--muted);border:1px solid var(--border);border-radius:12px;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer;}
+.ai-note{display:flex;align-items:center;gap:5px;font-size:11.5px;color:#059669;font-weight:500;}
+
+/* Hint toast */
+.hint-tip{background:#FFF8E1;border:1px solid #FDE68A;border-radius:9px;padding:10px 13px;font-size:12.5px;color:#92400E;line-height:1.6;}
+
+/* Animations */
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.msg-ai,.msg-user{animation:fadeIn .25s ease;}
+</style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <span class="sb-logo-text">VIZZY LABS</span>
+    <i data-lucide="panel-left-close" style="width:18px;height:18px;color:var(--muted);cursor:pointer;"></i>
+  </div>
+  <nav class="sb-nav">
+    <div class="nav-item"><i data-lucide="home" style="width:18px;height:18px;"></i>Home Page</div>
+    <div class="nav-item active"><i data-lucide="megaphone" style="width:18px;height:18px;"></i>Campaigns</div>
+    <div class="nav-item"><i data-lucide="users" style="width:18px;height:18px;"></i>Creator Feed</div>
+    <div class="nav-item"><i data-lucide="check-square" style="width:18px;height:18px;"></i>Review &amp; Approval</div>
+    <div class="nav-item"><i data-lucide="trending-up" style="width:18px;height:18px;"></i>Performance</div>
+    <div class="nav-item"><i data-lucide="message-circle" style="width:18px;height:18px;"></i>Communication</div>
+    <div class="nav-item"><i data-lucide="credit-card" style="width:18px;height:18px;"></i>Payout &amp; Spending</div>
+  </nav>
+  <div class="sb-foot">
+    <div class="nav-item" style="font-weight:400;"><i data-lucide="settings" style="width:18px;height:18px;"></i>Settings</div>
+    <div class="nav-item" style="font-weight:400;"><i data-lucide="log-out" style="width:18px;height:18px;"></i>Logout</div>
+    <div class="user-row">
+      <div class="avatar">BM</div>
+      <div>
+        <div style="font-size:14px;font-weight:500;color:var(--fg);">Paul Allison</div>
+        <div style="font-size:12px;color:#62748E;">Applovin</div>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="main">
+  <div class="card">
+
+    <!-- Top bar -->
+    <div class="topbar">
+      <div class="breadcrumb">
+        <span class="bc-muted">Campaigns</span>
+        <span class="bc-muted">&nbsp;›&nbsp;</span>
+        <span class="bc-cur">New Campaign</span>
+      </div>
+      <div class="topbar-right">
+        <div class="mode-toggle">
+          <button class="mode-btn active" id="btnChatMode" onclick="setMode('chat')">
+            <i data-lucide="bot" style="width:13px;height:13px;"></i> Agent Mode
+          </button>
+          <button class="mode-btn" id="btnFormMode" onclick="setMode('form')">
+            <i data-lucide="layout-list" style="width:13px;height:13px;"></i> Form Mode
+          </button>
+        </div>
+        <button class="btn-cancel">Cancel</button>
+      </div>
+    </div>
+
+    <!-- Split body -->
+    <div class="split-body">
+
+      <!-- CHAT PANEL -->
+      <div class="chat-panel full" id="chatPanel">
+
+        <div class="chat-hdr">
+          <div class="ai-avatar">✦</div>
+          <div>
+            <div class="chat-hdr-title">Vizzy Campaign Agent</div>
+            <div class="chat-hdr-sub">I'll help you launch your campaign in just a few steps</div>
+          </div>
+          <div class="step-badge" id="stepBadge">Getting started</div>
+        </div>
+
+        <!-- Progress -->
+        <div class="prog-strip" id="progStrip" style="display:none;">
+          <div class="prog-step" id="ps1"><div class="prog-dot">1</div>Product</div>
+          <div class="prog-line" id="pl1"></div>
+          <div class="prog-step" id="ps2"><div class="prog-dot">2</div>Type</div>
+          <div class="prog-line" id="pl2"></div>
+          <div class="prog-step" id="ps3"><div class="prog-dot">3</div>Volume</div>
+          <div class="prog-line" id="pl3"></div>
+          <div class="prog-step" id="ps4"><div class="prog-dot">4</div>Goal</div>
+          <div class="prog-line" id="pl4"></div>
+          <div class="prog-step" id="ps5"><div class="prog-dot">5</div>Ads</div>
+          <div class="prog-line" id="pl5"></div>
+          <div class="prog-step" id="ps6"><div class="prog-dot">6</div>Budget</div>
+        </div>
+
+        <div class="chat-msgs" id="chatMsgs"></div>
+
+        <div class="chat-input-area">
+          <textarea class="chat-input" id="chatInput" placeholder="Type a message…" rows="1"></textarea>
+          <button class="btn-send" id="btnSend" onclick="handleSend()">
+            <i data-lucide="send" style="width:17px;height:17px;"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- FORM PANEL -->
+      <div class="form-panel" id="formPanel">
+        <div class="fp-hdr">
+          <div class="fp-title">
+            <div class="icon-box"><i data-lucide="layout-list" style="width:14px;height:14px;color:#5856D6;"></i></div>
+            Campaign Summary
+            <span class="ai-badge">AI filled</span>
+          </div>
+          <div class="fp-sub">Updates as you answer questions</div>
+        </div>
+        <div class="fp-body" id="fpBody">
+          <!-- Rendered dynamically -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<script>
+lucide.createIcons();
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const S = {
+  step: 0,        // 0=greeting,1=url,2=product_confirm,3=type,4=volume,5=goal,6=ads,7=budget,8=done
+  formVisible: false,
+  mode: 'chat',
+  data: {
+    url: '',
+    productName: 'Vizzy App',
+    description: 'The Automatic UGC Video Platform for Real Growth',
+    category: 'SaaS · Marketing Technology',
+    audience: 'DTC brands, e-commerce marketers',
+    features: ['Work with the right creators that converts','Automated briefing & performance tracking','Data driven performance optimization'],
+    competitors: ['sideshift','posted','mandy'],
+    type: null, volume: null, goal: null, ads: null, budget: null
+  }
+};
+
+const STEPS_META = [
+  {id:'product',label:'Product'},
+  {id:'type',label:'Type'},
+  {id:'volume',label:'Volume'},
+  {id:'goal',label:'Goal'},
+  {id:'ads',label:'Ads'},
+  {id:'budget',label:'Budget'}
+];
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const chatMsgs = document.getElementById('chatMsgs');
+const chatInput = document.getElementById('chatInput');
+const chatPanel = document.getElementById('chatPanel');
+const formPanel = document.getElementById('formPanel');
+const fpBody    = document.getElementById('fpBody');
+const stepBadge = document.getElementById('stepBadge');
+const progStrip = document.getElementById('progStrip');
+
+// ─── Mode toggle ──────────────────────────────────────────────────────────────
+function setMode(m) {
+  S.mode = m;
+  document.getElementById('btnChatMode').classList.toggle('active', m==='chat');
+  document.getElementById('btnFormMode').classList.toggle('active', m==='form');
+  if (m === 'form') {
+    chatPanel.className = 'chat-panel hidden';
+    formPanel.className = 'form-panel full-form';
+    renderFullForm();
+  } else {
+    chatPanel.className = S.formVisible ? 'chat-panel split' : 'chat-panel full';
+    formPanel.className = S.formVisible ? 'form-panel visible' : 'form-panel';
+    renderFormPanel();
+  }
+  lucide.createIcons();
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function scrollBottom() {
+  setTimeout(() => chatMsgs.scrollTop = chatMsgs.scrollHeight, 50);
+}
+
+function addMsg(html, type='ai') {
+  const wrap = document.createElement('div');
+  if (type === 'ai') {
+    wrap.className = 'msg-ai';
+    wrap.innerHTML = `<div class="av-sm">✦</div><div>${html}</div>`;
+  } else {
+    wrap.className = 'msg-user';
+    wrap.innerHTML = `<div class="bubble-user">${html}</div>`;
+  }
+  chatMsgs.appendChild(wrap);
+  scrollBottom();
+  return wrap;
+}
+
+function addTyping() {
+  const wrap = document.createElement('div');
+  wrap.className = 'msg-ai';
+  wrap.id = 'typingMsg';
+  wrap.innerHTML = `<div class="av-sm">✦</div><div class="bubble-ai"><div class="typing"><span></span><span></span><span></span></div></div>`;
+  chatMsgs.appendChild(wrap);
+  scrollBottom();
+}
+
+function removeTyping() {
+  const t = document.getElementById('typingMsg');
+  if (t) t.remove();
+}
+
+function disableChips() {
+  document.querySelectorAll('.chip:not(.disabled),.chip-card:not(.disabled)').forEach(c=>{
+    c.classList.add('disabled');
+  });
+}
+
+function updateProgress(activeStep) {
+  // activeStep: 1–6 corresponding to product,type,volume,goal,ads,budget
+  progStrip.style.display = 'flex';
+  for (let i = 1; i <= 6; i++) {
+    const ps = document.getElementById('ps'+i);
+    const pl = document.getElementById('pl'+i);
+    ps.className = 'prog-step' + (i < activeStep ? ' done' : i === activeStep ? ' active' : '');
+    if (pl) pl.className = 'prog-line' + (i < activeStep ? ' done' : '');
+    ps.querySelector('.prog-dot').textContent = i < activeStep ? '✓' : i;
+  }
+  const labels = ['Product','Type','Volume','Goal','Ads','Budget'];
+  if (activeStep <= 6) stepBadge.textContent = `Step ${activeStep} of 6`;
+  else stepBadge.textContent = '🎉 Complete';
+}
+
+// ─── Form panel renderer ──────────────────────────────────────────────────────
+function renderFormPanel() {
+  const d = S.data;
+  const pend = v => v ? `<span class="summ-val">${v}</span>` : `<span class="summ-val pending">Pending…</span>`;
+
+  fpBody.innerHTML = `
+    <div class="sec-title">Product Overview</div>
+    <div class="field-grp">
+      <div class="field-lbl">Product Name</div>
+      <input class="field-in" value="${d.productName}" oninput="S.data.productName=this.value" />
+      <div class="ai-note"><i data-lucide="sparkles" style="width:11px;height:11px;"></i> AI extracted</div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Website</div>
+      <input class="field-in" value="${d.url||'app.vizzy.com'}" oninput="S.data.url=this.value" />
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Description</div>
+      <textarea class="field-in" oninput="S.data.description=this.value">${d.description}</textarea>
+      <div class="ai-note"><i data-lucide="sparkles" style="width:11px;height:11px;"></i> AI extracted</div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Key Selling Points</div>
+      <div class="field-items">
+        ${d.features.map((f,i)=>`
+          <div class="field-item">
+            <span class="num">${i+1}.</span>
+            <span style="flex:1;font-size:12.5px;">${f}</span>
+            <span class="del" onclick="S.data.features.splice(${i},1);renderFormPanel();lucide.createIcons();">
+              <i data-lucide="x" style="width:12px;height:12px;"></i>
+            </span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Competitors</div>
+      <div class="field-items">
+        ${d.competitors.map((c,i)=>`
+          <div class="field-item">
+            <span class="num">${i+1}.</span>
+            <span style="flex:1;">${c}</span>
+            <span class="del" onclick="S.data.competitors.splice(${i},1);renderFormPanel();lucide.createIcons();">
+              <i data-lucide="x" style="width:12px;height:12px;"></i>
+            </span>
+          </div>`).join('')}
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="sec-title">Campaign Config</div>
+    <div class="summ-block">
+      <div class="summ-row"><span class="summ-lbl">Type</span>${pend(d.type)}</div>
+      <div class="summ-row"><span class="summ-lbl">Videos</span>${pend(d.volume)}</div>
+      <div class="summ-row"><span class="summ-lbl">Goal</span>${pend(d.goal)}</div>
+      <div class="summ-row"><span class="summ-lbl">Paid Ads</span>${pend(d.ads)}</div>
+      <div class="summ-row"><span class="summ-lbl">Budget</span>${pend(d.budget)}</div>
+    </div>
+    ${d.budget ? renderBudgetBreakdown() : ''}
+    ${S.step >= 8 ? `
+      <button class="btn-launch" onclick="alert('Campaign launched! 🚀')">
+        <i data-lucide="rocket" style="width:16px;height:16px;"></i> Launch Campaign
+      </button>
+      <button class="btn-draft">Save as Draft</button>
+    ` : ''}
+  `;
+  lucide.createIcons();
+}
+
+function renderBudgetBreakdown() {
+  const b = S.data.budget;
+  if (!b) return '';
+  const splits = {'Under $5K':'$500–$1K','$5K–$15K':'$1.5K–$4.5K','$15K–$50K':'$4.5K–$15K','$50K+':'$15K+'};
+  const adBudget = splits[b] || '–';
+  return `
+    <div class="budget-bar">
+      <div class="bbar-row"><span>Creator Fees (70%)</span><span style="font-weight:600;">${b.replace('Under ','')} est.</span></div>
+      <div class="bbar"><div class="bbar-fill" style="width:70%;background:var(--primary);"></div></div>
+      <div class="bbar-row"><span>Ad Amplification (30%)</span><span style="font-weight:600;">${adBudget}</span></div>
+      <div class="bbar"><div class="bbar-fill" style="width:30%;background:#A78BFA;"></div></div>
+    </div>`;
+}
+
+function renderFullForm() {
+  const d = S.data;
+  fpBody.innerHTML = `
+    <div class="sec-title">Product Overview</div>
+    <div class="field-grp">
+      <div class="field-lbl">Product Name</div>
+      <input class="field-in" value="${d.productName}" />
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Website / Landing Page URL</div>
+      <input class="field-in" value="${d.url||'app.vizzy.com'}" />
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Product Description</div>
+      <textarea class="field-in" style="min-height:80px;">${d.description}</textarea>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Key Selling Points</div>
+      <div class="field-items">
+        ${d.features.map((f,i)=>`<div class="field-item"><span class="num">${i+1}.</span><span style="flex:1;">${f}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Competitors (3–5)</div>
+      <div class="field-items">
+        ${d.competitors.map((c,i)=>`<div class="field-item"><span class="num">${i+1}.</span><span style="flex:1;">${c}</span></div>`).join('')}
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="sec-title">Campaign Type</div>
+    <div class="chips" style="flex-direction:column;gap:8px;">
+      ${[['🎯 Influencer Campaign','Curated creator partnerships for authentic reach'],['📱 UGC (User-Generated)','Raw, authentic content from real users'],['⚙️ Full Management','End-to-end campaign management']].map(([t,d2])=>`
+        <div class="chip-card ${S.data.type===t.replace(/^[^ ]+ /,'') ? 'selected':''}" onclick="S.data.type=this.querySelector('.title').textContent.trim().replace(/^. /,'');renderFullForm();">
+          <div class="title">${t}</div><div class="desc">${d2}</div>
+        </div>`).join('')}
+    </div>
+    <div class="divider"></div>
+    <div class="sec-title">Campaign Goals</div>
+    <div class="field-grp">
+      <div class="field-lbl">Video Volume</div>
+      <div class="chips">
+        ${['10','50','100','Custom'].map(v=>`<div class="chip ${S.data.volume===v+' videos'||S.data.volume===v?'selected':''}" onclick="S.data.volume='${v} videos';renderFullForm();">${v} videos</div>`).join('')}
+      </div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Primary Goal</div>
+      <div class="chips">
+        ${['📣 Brand Awareness','⚡ Engagement & Conversion'].map(g=>`<div class="chip ${S.data.goal===g?'selected':''}" onclick="S.data.goal='${g}';renderFullForm();">${g}</div>`).join('')}
+      </div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Paid Ads</div>
+      <div class="chips">
+        ${['Yes, definitely','Open to it','Organic only'].map(a=>`<div class="chip ${S.data.ads===a?'selected':''}" onclick="S.data.ads='${a}';renderFullForm();">${a}</div>`).join('')}
+      </div>
+    </div>
+    <div class="field-grp">
+      <div class="field-lbl">Budget</div>
+      <div class="chips">
+        ${['Under $5K','$5K–$15K','$15K–$50K','$50K+'].map(b=>`<div class="chip ${S.data.budget===b?'selected':''}" onclick="S.data.budget='${b}';renderFullForm();">${b}</div>`).join('')}
+      </div>
+    </div>
+    <div class="divider"></div>
+    <button class="btn-launch" onclick="alert('Campaign launched! 🚀')">
+      <i data-lucide="rocket" style="width:16px;height:16px;"></i> Launch Campaign
+    </button>
+    <button class="btn-draft">Save as Draft</button>
+  `;
+  lucide.createIcons();
+}
+
+// ─── Show form panel with animation ──────────────────────────────────────────
+function showFormPanel() {
+  if (S.formVisible || S.mode === 'form') return;
+  S.formVisible = true;
+  chatPanel.className = 'chat-panel split';
+  formPanel.className = 'form-panel visible';
+  renderFormPanel();
+}
+
+// ─── Step flow ────────────────────────────────────────────────────────────────
+function nextStep(step) {
+  S.step = step;
+  switch(step) {
+    case 1: showStepUrl(); break;
+    case 2: showStepProductConfirm(); break;
+    case 3: showStepType(); break;
+    case 4: showStepVolume(); break;
+    case 5: showStepGoal(); break;
+    case 6: showStepAds(); break;
+    case 7: showStepBudget(); break;
+    case 8: showStepDone(); break;
+  }
+}
+
+// Step 0 → 1: Greeting → ask URL
+function showStepUrl() {
+  updateProgress(1);
+  addMsg(`<div class="bubble-ai">
+    👋 Hi! I'm Vizzy's campaign setup agent. I'll help you launch your campaign in just a few steps.<br><br>
+    To get started — <strong>what's your product's landing page URL?</strong> I'll extract the info for you automatically.
+    <div class="url-row" style="margin-top:10px;">
+      <input class="url-input" id="urlInput" placeholder="https://yourproduct.com" value="app.vizzy.com" />
+      <button class="btn-analyze" onclick="submitUrl()">Analyze →</button>
+    </div>
+    <div style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;">
+      <div class="chip" onclick="document.getElementById('urlInput').value='app.vizzy.com';" style="font-size:12px;padding:5px 10px;">app.vizzy.com</div>
+      <div class="chip" onclick="document.getElementById('urlInput').value='vizzy.ai';" style="font-size:12px;padding:5px 10px;">vizzy.ai</div>
+    </div>
+  </div>`);
+}
+
+function submitUrl() {
+  const url = document.getElementById('urlInput').value.trim();
+  if (!url) return;
+  S.data.url = url;
+  disableChips();
+  addMsg(url, 'user');
+  addTyping();
+  setTimeout(() => {
+    removeTyping();
+    addMsg(`<div class="bubble-ai">
+      🔍 Analyzing <strong>${url}</strong>…
+      <div class="hint-tip" style="margin-top:8px;">Scanning page content, identifying product category, extracting features and competitor signals…</div>
+    </div>`);
+    addTyping();
+    setTimeout(() => {
+      removeTyping();
+      nextStep(2);
+    }, 2200);
+  }, 1200);
+}
+
+// Step 2: Product confirmation → show form
+function showStepProductConfirm() {
+  updateProgress(1);
+  const d = S.data;
+  addMsg(`<div class="bubble-ai">
+    ✅ Done! Here's what I found about your product. I've filled in the form on the right — take a look and confirm!
+    <div class="confirm-card" style="margin-top:10px;">
+      <div class="cc-row"><span class="cc-label">Product</span><span class="cc-val">${d.productName}</span></div>
+      <div class="cc-row"><span class="cc-label">Category</span><span class="cc-val">${d.category}</span></div>
+      <div class="cc-row"><span class="cc-label">Audience</span><span class="cc-val">${d.audience}</span></div>
+      <div class="cc-row"><span class="cc-label">Features</span>
+        <div class="tag-list">${d.features.map(f=>`<span class="tag">${f.split(' ').slice(0,3).join(' ')}…</span>`).join('')}</div>
+      </div>
+      <div class="cc-row"><span class="cc-label">Competitors</span><span class="cc-val">${d.competitors.join(' · ')}</span></div>
+    </div>
+    <div style="margin-top:10px;font-size:13.5px;color:var(--fg2);"><strong>Does this look right?</strong></div>
+    <div class="chips" style="margin-top:8px;">
+      <div class="chip" onclick="pickConfirm('yes')">✓ Looks good!</div>
+      <div class="chip" onclick="pickConfirm('edit')">✏️ Edit details</div>
+      <div class="chip" onclick="pickConfirm('url')">🔗 Use different URL</div>
+    </div>
+  </div>`);
+  showFormPanel();
+}
+
+function pickConfirm(v) {
+  disableChips();
+  if (v === 'yes') {
+    addMsg('Looks good! ✓', 'user');
+    addTyping();
+    setTimeout(() => { removeTyping(); nextStep(3); }, 900);
+  } else if (v === 'edit') {
+    addMsg('I\'d like to edit the details', 'user');
+    addMsg(`<div class="bubble-ai">No problem! You can edit any field directly in the panel on the right 👉<br><br>When you're done, just tell me you're ready to continue.</div>`);
+    document.getElementById('chatInput').placeholder = 'Type "ready" when done editing…';
+    S.step = 2.5;
+  } else {
+    addMsg('Use a different URL', 'user');
+    addMsg(`<div class="bubble-ai">Sure! Paste the new URL below:
+      <div class="url-row" style="margin-top:8px;">
+        <input class="url-input" id="urlInput2" placeholder="https://…" />
+        <button class="btn-analyze" onclick="resubmitUrl()">Analyze →</button>
+      </div>
+    </div>`);
+  }
+  lucide.createIcons();
+}
+
+function resubmitUrl() {
+  const url = document.getElementById('urlInput2').value.trim();
+  if (!url) return;
+  S.data.url = url;
+  disableChips();
+  addMsg(url, 'user');
+  addTyping();
+  setTimeout(() => { removeTyping(); nextStep(2); }, 2000);
+}
+
+// Step 3: Campaign type
+function showStepType() {
+  updateProgress(2);
+  addMsg(`<div class="bubble-ai">
+    Great! Now let's pick the right campaign type for <strong>${S.data.productName}</strong>.<br><br>
+    <strong>What kind of content are you looking to run?</strong>
+    <div class="chips" style="flex-direction:column;gap:8px;margin-top:10px;">
+      <div class="chip-card" onclick="pickType('Influencer Campaign')">
+        <div class="title">🎯 Influencer Campaign</div>
+        <div class="desc">Partner with creators to build authentic brand stories</div>
+      </div>
+      <div class="chip-card" onclick="pickType('UGC')">
+        <div class="title">📱 UGC (User-Generated)</div>
+        <div class="desc">Raw, authentic content produced by real users</div>
+      </div>
+      <div class="chip-card" onclick="pickType('Full Management')">
+        <div class="title">⚙️ Full Management</div>
+        <div class="desc">Vizzy handles everything end-to-end for you</div>
+      </div>
+    </div>
+  </div>`);
+}
+
+function pickType(v) {
+  S.data.type = v;
+  disableChips();
+  addMsg(v, 'user');
+  renderFormPanel();
+  addTyping();
+  setTimeout(() => {
+    removeTyping();
+    nextStep(4);
+  }, 800);
+}
+
+// Step 4: Volume
+function showStepVolume() {
+  updateProgress(3);
+  const emoji = {['Influencer Campaign']:'🎯',['UGC']:'📱',['Full Management']:'⚙️'}[S.data.type]||'✅';
+  addMsg(`<div class="bubble-ai">
+    ${emoji} <strong>${S.data.type}</strong> — great choice!<br><br>
+    <strong>How many videos are you aiming to produce?</strong>
+    <div class="chips" style="margin-top:10px;">
+      <div class="chip" onclick="pickVolume('10 videos')">10 videos</div>
+      <div class="chip" onclick="pickVolume('50 videos')">50 videos</div>
+      <div class="chip" onclick="pickVolume('100 videos')">100 videos</div>
+      <div class="chip" onclick="pickVolume('custom')">✏️ Custom amount</div>
+    </div>
+  </div>`);
+}
+
+function pickVolume(v) {
+  if (v === 'custom') {
+    addMsg(`<div class="bubble-ai">How many videos would you like? Type the number below.</div>`);
+    document.getElementById('chatInput').placeholder = 'e.g. 30 videos';
+    S.step = 4.5;
+    return;
+  }
+  S.data.volume = v;
+  disableChips();
+  addMsg(v, 'user');
+  renderFormPanel();
+  addTyping();
+  setTimeout(() => { removeTyping(); nextStep(5); }, 800);
+}
+
+// Step 5: Goal
+function showStepGoal() {
+  updateProgress(4);
+  const vol = S.data.volume;
+  addMsg(`<div class="bubble-ai">
+    ${vol} — solid scale! 📊<br><br>
+    <strong>What's your primary campaign goal?</strong>
+    <div class="chips" style="flex-direction:column;gap:8px;margin-top:10px;">
+      <div class="chip-card" onclick="pickGoal('Brand Awareness')">
+        <div class="title">📣 Brand Awareness</div>
+        <div class="desc">Maximize reach and introduce your brand to new audiences</div>
+      </div>
+      <div class="chip-card" onclick="pickGoal('Engagement & Conversion')">
+        <div class="title">⚡ Engagement &amp; Conversion</div>
+        <div class="desc">Drive clicks, sign-ups, and measurable ROI</div>
+      </div>
+    </div>
+  </div>`);
+}
+
+function pickGoal(v) {
+  S.data.goal = v;
+  disableChips();
+  addMsg(v, 'user');
+  renderFormPanel();
+  addTyping();
+  setTimeout(() => { removeTyping(); nextStep(6); }, 800);
+}
+
+// Step 6: Paid ads
+function showStepAds() {
+  updateProgress(5);
+  addMsg(`<div class="bubble-ai">
+    To maximize ${S.data.goal === 'Engagement & Conversion' ? 'conversions' : 'reach'}, paid amplification of top-performing videos can significantly boost your ROI.<br><br>
+    <strong>Are you planning to run paid ads alongside this campaign?</strong>
+    <div class="chips" style="margin-top:10px;">
+      <div class="chip" onclick="pickAds('Yes, definitely')">✅ Yes, definitely</div>
+      <div class="chip" onclick="pickAds('Open to it')">🤔 Open to it</div>
+      <div class="chip" onclick="pickAds('Organic only')">❌ Organic only</div>
+    </div>
+  </div>`);
+}
+
+function pickAds(v) {
+  S.data.ads = v;
+  disableChips();
+  addMsg(v, 'user');
+  renderFormPanel();
+  if (v === 'Organic only') {
+    addTyping();
+    setTimeout(() => {
+      removeTyping();
+      addMsg(`<div class="bubble-ai">
+        Got it — organic only for now! 🌱<br><br>
+        Just a heads up: with <strong>${S.data.volume}</strong>, paid amplification typically delivers 3–5× more reach. You can always activate ads later from the campaign dashboard.<br><br>
+        Let's move on to budget.
+      </div>`);
+      setTimeout(() => nextStep(7), 700);
+    }, 1000);
+  } else {
+    addTyping();
+    setTimeout(() => { removeTyping(); nextStep(7); }, 800);
+  }
+}
+
+// Step 7: Budget
+function showStepBudget() {
+  updateProgress(6);
+  addMsg(`<div class="bubble-ai">
+    ${S.data.ads !== 'Organic only' ? '💸 Great — we\'ll allocate budget for both creators and ads.' : 'Almost there!'}<br><br>
+    <strong>What's your total campaign budget?</strong>
+    <div class="chips" style="flex-wrap:wrap;margin-top:10px;">
+      <div class="chip" onclick="pickBudget('Under $5K')">Under $5K</div>
+      <div class="chip" onclick="pickBudget('$5K–$15K')">$5K–$15K</div>
+      <div class="chip" onclick="pickBudget('$15K–$50K')">$15K–$50K</div>
+      <div class="chip" onclick="pickBudget('$50K+')">$50K+</div>
+      <div class="chip" onclick="pickBudget('custom')">✏️ Custom</div>
+    </div>
+  </div>`);
+}
+
+function pickBudget(v) {
+  if (v === 'custom') {
+    addMsg(`<div class="bubble-ai">What's your total budget? Type it below (e.g. "$8,000" or "$25K")</div>`);
+    document.getElementById('chatInput').placeholder = 'e.g. $8,000';
+    S.step = 7.5;
+    return;
+  }
+  S.data.budget = v;
+  disableChips();
+  addMsg(v, 'user');
+  renderFormPanel();
+  // Edge case: budget too low for video count
+  const lowBudget = v === 'Under $5K' && parseInt(S.data.volume) >= 50;
+  addTyping();
+  setTimeout(() => {
+    removeTyping();
+    if (lowBudget) {
+      addMsg(`<div class="bubble-ai">
+        ⚠️ <strong>Heads up:</strong> With <strong>${S.data.volume}</strong> and a budget under $5K, the per-video creator fee would be below $30 — which limits creator quality and availability.<br><br>
+        We recommend either reducing to <strong>10–20 videos</strong> at higher quality, or bumping the budget to <strong>$5K–$15K</strong>. Would you like to adjust?
+        <div class="chips" style="margin-top:10px;">
+          <div class="chip" onclick="adjustForLowBudget('volume')">📉 Reduce video count</div>
+          <div class="chip" onclick="adjustForLowBudget('budget')">💰 Increase budget</div>
+          <div class="chip" onclick="adjustForLowBudget('keep')">Keep as is</div>
+        </div>
+      </div>`);
+    } else {
+      nextStep(8);
+    }
+  }, 1000);
+}
+
+function adjustForLowBudget(action) {
+  disableChips();
+  if (action === 'volume') {
+    S.data.volume = '10 videos';
+    addMsg('Reduce to 10 videos', 'user');
+    renderFormPanel();
+  } else if (action === 'budget') {
+    S.data.budget = '$5K–$15K';
+    addMsg('Increase to $5K–$15K', 'user');
+    renderFormPanel();
+  } else {
+    addMsg('Keep as is', 'user');
+  }
+  addTyping();
+  setTimeout(() => { removeTyping(); nextStep(8); }, 800);
+}
+
+// Step 8: Done
+function showStepDone() {
+  updateProgress(7);
+  stepBadge.textContent = '🎉 Complete';
+  addMsg(`<div class="bubble-ai">
+    🎉 <strong>Your campaign is ready to launch!</strong><br><br>
+    Here's your summary:
+    <div class="confirm-card" style="margin-top:10px;">
+      <div class="cc-row"><span class="cc-label">Product</span><span class="cc-val">${S.data.productName}</span></div>
+      <div class="cc-row"><span class="cc-label">Type</span><span class="cc-val">${S.data.type}</span></div>
+      <div class="cc-row"><span class="cc-label">Videos</span><span class="cc-val">${S.data.volume}</span></div>
+      <div class="cc-row"><span class="cc-label">Goal</span><span class="cc-val">${S.data.goal}</span></div>
+      <div class="cc-row"><span class="cc-label">Paid Ads</span><span class="cc-val">${S.data.ads}</span></div>
+      <div class="cc-row"><span class="cc-label">Budget</span><span class="cc-val">${S.data.budget}</span></div>
+    </div>
+    <div style="margin-top:12px;font-size:13.5px;color:var(--fg2);"><strong>What happens next:</strong></div>
+    <div style="display:flex;flex-direction:column;gap:7px;margin-top:8px;">
+      ${[['1','We\'ll source and vet creators that match your brand'],['2','You review &amp; approve creator proposals within 48h'],['3','Videos go live and we track performance in real time']].map(([n,t])=>`
+        <div style="display:flex;gap:8px;align-items:flex-start;font-size:13px;color:var(--fg2);">
+          <span style="background:var(--primary-light);color:var(--primary);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${n}</span>
+          ${t}
+        </div>`).join('')}
+    </div>
+  </div>`);
+  renderFormPanel();
+  document.getElementById('chatInput').disabled = true;
+  document.getElementById('btnSend').disabled = true;
+  document.getElementById('chatInput').placeholder = 'Campaign setup complete!';
+}
+
+// ─── Text input handling ──────────────────────────────────────────────────────
+function handleSend() {
+  const txt = chatInput.value.trim();
+  if (!txt) return;
+  chatInput.value = '';
+  chatInput.style.height = 'auto';
+
+  if (S.step === 2.5) {
+    // After editing
+    addMsg(txt, 'user');
+    if (txt.toLowerCase().includes('ready') || txt.toLowerCase().includes('done') || txt.toLowerCase().includes('ok') || txt.toLowerCase().includes('continue')) {
+      addTyping();
+      setTimeout(() => { removeTyping(); nextStep(3); }, 800);
+    } else {
+      addMsg(`<div class="bubble-ai">Got it! Feel free to keep editing on the right. Type <strong>"ready"</strong> when you want to continue.</div>`);
+    }
+  } else if (S.step === 4.5) {
+    // Custom volume
+    const num = txt.replace(/[^0-9]/g,'');
+    S.data.volume = num ? `${num} videos` : txt;
+    addMsg(S.data.volume, 'user');
+    renderFormPanel();
+    addTyping();
+    setTimeout(() => { removeTyping(); nextStep(5); }, 800);
+    S.step = 4;
+  } else if (S.step === 7.5) {
+    // Custom budget
+    S.data.budget = txt;
+    addMsg(txt, 'user');
+    renderFormPanel();
+    addTyping();
+    setTimeout(() => { removeTyping(); nextStep(8); }, 1000);
+    S.step = 7;
+  } else {
+    addMsg(txt, 'user');
+    addMsg(`<div class="bubble-ai">I'm currently walking you through the setup step by step. Please use the options above to continue, or click one of the buttons below.</div>`);
+  }
+}
+
+// ─── Input auto-resize & enter key ────────────────────────────────────────────
+chatInput.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend(); }
+});
+chatInput.addEventListener('input', () => {
+  chatInput.style.height = 'auto';
+  chatInput.style.height = Math.min(chatInput.scrollHeight, 100) + 'px';
+});
+
+// ─── Boot ──────────────────────────────────────────────────────────────────────
+setTimeout(() => nextStep(1), 300);
+</script>
+</body>
+</html>
